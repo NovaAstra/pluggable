@@ -3,6 +3,20 @@
     "target": "ESNext",
     "moduleResolution": "nodenext",
     "module": "NodeNext",
-    "strict": true
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "useDefineForClassFields": true,
+
+    "noEmit": true,
+
+    "esModuleInterop": true,
+    "isolatedModules": true,
+
+    "skipLibCheck": true,
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
   }
 }
