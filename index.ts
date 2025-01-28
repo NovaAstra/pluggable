@@ -25,6 +25,8 @@ export interface Plugin {
   name: string;
 }
 
+const PipelineSymbol = Symbol.for('PLUGGABLE_PIPELINE');
+
 export class Context<I> {
   private currentValue: I;
 
@@ -59,8 +61,6 @@ export class Context<I> {
   }
 }
 
-const PipelineSymbol = Symbol.for('PLUGGABLE_PIPELINE');
-
 export class Pipeline<I, O> implements PipelineLike<I, O> {
   public readonly middlewares: Middlewares<I, O> = [];
 
@@ -81,6 +81,16 @@ export class Pipeline<I, O> implements PipelineLike<I, O> {
 
   public readonly [PipelineSymbol] = true;
 }
+
+export abstract class Pluggable {
+  public readonly plugins: Map<string, Plugin> = new Map()
+
+  public reset() {
+    this.plugins.clear()
+  }
+}
+
+export class Beacon extends Pluggable { }
 
 export function isPipeline<I, O>(input: unknown): input is Pipeline<I, O> {
   return Boolean((input as Pipeline<I, O>)?.[PipelineSymbol]);
@@ -129,6 +139,7 @@ export function createHooks() { }
 
 export function createApis() { }
 
-export class Pluggable {
-
+export function defineConfig() {
+  const beacon = new Beacon()
+  return beacon
 }
