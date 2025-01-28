@@ -25,15 +25,15 @@ export interface Plugin {
   name: string;
 }
 
-export class Context<T> {
-  private currentValue: T;
+export class Context<I> {
+  private currentValue: I;
 
-  public constructor(input: T) {
+  public constructor(input: I) {
     this.currentValue = input;
   }
 
   public use() {
-    return new Proxy(this as Context<T>, {
+    return new Proxy(this as Context<I>, {
       get(target, prop) {
         if (prop === 'value') {
           return target.get();
@@ -42,7 +42,7 @@ export class Context<T> {
       },
       set(target, prop, value) {
         if (prop === 'value') {
-          target.set(value);
+          target.set(value as I);
           return true
         }
         return Reflect.set(target, prop, value);
@@ -50,29 +50,85 @@ export class Context<T> {
     });
   }
 
-  public get(): T {
+  public get(): I {
     return this.currentValue;
   }
 
-  public set(input: T): T {
+  public set(input: I): I {
     return this.currentValue = input;
   }
 }
 
-export class Pipeline {
-  public use() { }
+const PipelineSymbol = Symbol.for('PLUGGABLE_PIPELINE');
 
-  public run() { }
+export class Pipeline<I, O> implements PipelineLike<I, O> {
+  public readonly middlewares: Middlewares<I, O> = [];
 
-  public dispatch() { }
+  public use(...inputs: MiddlewareInput<I, O>[]): Pipeline<I, O> {
+    this.middlewares.push(...inputs.flatMap(getMiddlewares));
+    return this as Pipeline<I, O>;
+  }
+
+  public run(input: I) {
+    return this.dispatch(0, input)
+  }
+
+  public dispatch(index: number, input: I) {
+    const callback = this.middlewares[index]
+    const next: Next<I, O> = (_input: I = input) => this.dispatch(index + 1, _input)
+    return callback(input, next)
+  }
+
+  public readonly [PipelineSymbol] = true;
 }
 
-export function getMiddleware() { }
+export function isPipeline<I, O>(input: unknown): input is Pipeline<I, O> {
+  return Boolean((input as Pipeline<I, O>)?.[PipelineSymbol]);
+}
 
-export function createContext() { }
+export function isMiddleware<I, O>(input: unknown): input is Middleware<I, O> {
+  return typeof input === 'function';
+}
 
-export function createPipeline() { }
+export function isMiddlewares<I, O>(input: unknown): input is Middlewares<I, O> {
+  return Array.isArray(input);
+}
+
+export function isPipelineLike<I, O>(input: unknown): input is PipelineLike<I, O> {
+  return typeof input === 'object' && input !== null && 'middlewares' in input;
+}
+
+export function getMiddlewares<I, O>(
+  input: MiddlewareInput<I, O>
+): Middlewares<I, O> {
+  if (isMiddleware<I, O>(input))
+    return [input]
+
+  if (isMiddlewares<I, O>(input))
+    return input.flatMap(middleware => getMiddlewares(middleware));
+
+
+  if (isPipelineLike<I, O>(input))
+    return getMiddlewares(input.middlewares);
+
+  throw new Error(`The provided input is of type ${input}, but a Middleware, Middlewares array, 
+    or PipelineLike object was expected.`);
+}
+
+export function createContext<I>(input: I) {
+  const context = new Context<I>(input);
+  return context
+}
+
+export function createPipeline<I, O>() {
+  const pipeline = new Pipeline<I, O>()
+  return pipeline
+}
 
 export function createHooks() { }
 
 export function createApis() { }
+
+export class Pluggable {
+
+}
