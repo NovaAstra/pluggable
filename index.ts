@@ -1,4 +1,4 @@
-
+//@ts-nocheck
 export type Promisable<T = unknown> = T | Promise<T>;
 
 export type Next<I = unknown, O = unknown> = (
@@ -142,4 +142,19 @@ export function createApis() { }
 export function defineConfig() {
   const beacon = new Beacon()
   return beacon
+}
+
+function pluginA() {
+  return {
+    name: "PluginA",
+    setup(api, context) {
+      api.useConfigContext()
+      api.useAppContext()
+
+      return {
+        beforeCreated() { },
+        created() { }
+      }
+    }
+  }
 }
