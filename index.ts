@@ -158,3 +158,9 @@ function pluginA() {
     }
   }
 }
+
+function makeRunner<Hooks extends Record<string, any>>(
+  hooks: Hooks
+) {
+  const runner = Object.create()
+}
