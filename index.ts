@@ -159,8 +159,16 @@ function pluginA() {
   }
 }
 
-function makeRunner<Hooks extends Record<string, any>>(
-  hooks: Hooks
+export type Hook = () => void;
+
+export type AnyHook = Hook
+
+export type Hooks = Record<string, AnyHook>
+
+function makeRunner<H extends Hooks>(
+  hooks: H
 ) {
   const runner = Object.create()
+
+  return runner
 }
