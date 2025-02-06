@@ -219,7 +219,9 @@ export class Pipeline<I, O> implements PipelineLike<I, O> {
 }
 
 class SyncHook extends Pipeline {
+  public call(input) {
 
+  }
 }
 
 class SyncBailHook extends Pipeline {
