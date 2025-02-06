@@ -165,10 +165,64 @@ export type AnyHook = Hook
 
 export type Hooks = Record<string, AnyHook>
 
-function makeRunner<H extends Hooks>(
-  hooks: H
+export type Model<I, O> = Pipeline<I, O>
+
+export type AnyModel = Model<any, any>
+
+export type Models = Record<string, AnyModel>
+
+function makeRunner<H extends Hooks, M extends Models>(
+  hooksList: H[],
+  models: M
 ) {
-  const runner = Object.create()
+  const runner = Object.create(null)
+
+  if (models) {
+    for (const key in models) {
+      hooksList.forEach(hooks => {
+        if (hooks?.[key]) {
+          models[key].use(hooks[key])
+        }
+      })
+
+      runner[key] = () =>
+        (models[key] as any).run();
+    }
+  }
 
   return runner
 }
+
+
+import { SyncHook } from "tapable"
+
+
+export class Pipeline<I, O> implements PipelineLike<I, O> {
+  public readonly middlewares: Middlewares<I, O> = [];
+
+  public use(...inputs: MiddlewareInput<I, O>[]): Pipeline<I, O> {
+    this.middlewares.push(...inputs.flatMap(getMiddlewares));
+    return this as Pipeline<I, O>;
+  }
+
+  public run(input: I) {
+    return this.dispatch(0, input)
+  }
+
+  public dispatch(index: number, input: I) {
+    const callback = this.middlewares[index]
+    const next: Next<I, O> = (_input: I = input) => this.dispatch(index + 1, _input)
+    return callback(input, next)
+  }
+
+  public readonly [PipelineSymbol] = true;
+}
+
+class SyncHook extends Pipeline {
+
+}
+
+class SyncBailHook extends Pipeline {
+
+}
+

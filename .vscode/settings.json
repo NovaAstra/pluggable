@@ -12,7 +12,6 @@
       "mode": "auto"
     }
   ],
-  "window.zoomLevel": 1,
   "terminal.integrated.profiles.windows": {
     "Command Prompt": {
       "path": [
