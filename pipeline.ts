@@ -90,7 +90,21 @@ export type Hook = () => void
 
 export type Api = () => void
 
-export type Plugin = {}
+export type PluginOptions<Setup = undefined> = {
+  name?: string;
+  pre?: string[];
+  post?: string[];
+  rivals?: string[];
+  required?: string[];
+  setup?: Setup;
+}
+
+export type Setup<Hooks, API, Context> = (
+  api: API,
+  context: Context
+) => void;
+
+export type Plugin = Required<PluginOptions<Setup>>
 
 export class Pluggable<
   H extends Record<string, Hook>,
@@ -98,7 +112,10 @@ export class Pluggable<
 > {
   public readonly plugins: Map<string, Plugin> = new Map()
 
-  public constructor(hooks?: Partial<H>, api?: A) {
+  public constructor(
+    public readonly hooks?: Partial<H>,
+    public readonly api?: A
+  ) {
 
   }
 
