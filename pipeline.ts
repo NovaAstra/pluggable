@@ -1,6 +1,7 @@
 export type Next<I, O> = (input?: I) => O
 
-export type Middleware<I = unknown, O = unknown> = (input: I, next: Next<I, O>) => O
+// export type Middleware<I = unknown, O = unknown> = (input: I, next: Next<I, O>) => O
+export type Middleware<I = unknown, O = unknown> = (input: I) => O
 
 export type Middlewares<I = unknown, O = unknown> = Middleware<I, O>[]
 
@@ -51,10 +52,36 @@ export abstract class Pipeline<I = unknown, O = unknown> implements PipelineLike
 }
 
 export class SyncHook<I = unknown, O = unknown> extends Pipeline<I, O> {
+  public run(input: I) {
+    return this.dispatch(0, input)
+  }
+
+  public dispatch(index: number, input: I | O): O {
+    if (index >= this.middlewares.length) return input as O;
+
+    const middleware = this.middlewares[index]
+    const result = middleware(input as I);
+    return this.dispatch(index + 1, result ?? input)
+  }
 }
 
-const runner = new SyncHook()
+export class SyncBailHook<I = unknown, O = unknown> extends Pipeline<I, O> {
 
-runner.use(() => {
-  console.log(1)
-})
+}
+
+export class SyncWaterfallHook<I = unknown, O = unknown> extends Pipeline<I, O> {
+
+}
+
+export class SyncLoopHook<I = unknown, O = unknown> extends Pipeline<I, O> {
+  public run(input: I) {
+    return this.dispatch(0, input)
+  }
+
+  public dispatch(index: number, input: I): O {
+    if (index >= this.middlewares.length) return input as unknown as O;
+    const middleware = this.middlewares[index]
+    const result = middleware(input as I);
+    return result === undefined ? this.dispatch(0, input) : this.dispatch(index + 1, input)
+  }
+}
