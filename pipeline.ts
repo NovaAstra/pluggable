@@ -102,6 +102,14 @@ export class Pluggable<
 
   }
 
+  public addPlugin() { }
+
+  public usePlugin() { }
+
+  public createPlugin() { }
+
+  public start() { }
+
   public reset(): void {
     this.plugins.clear()
   }
