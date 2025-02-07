@@ -1,5 +1,7 @@
 //@ts-nocheck
 
+import { afterEach } from "node:test";
+
 export type Args<T = unknown> = ReadonlyArray<T>;
 
 export type Middleware<I extends Args = unknown[], O = unknown> = (...inputs: I) => O
@@ -75,13 +77,32 @@ export abstract class Pipeline<I extends Args = unknown[], O = unknown> implemen
 //   }
 // }
 
-
-
 export class SyncWaterfallHook<I extends Args = unknown[], O = unknown> extends Pipeline<I, O> {
   public dispatch(index: number, inputs: I): void {
     if (index >= this.middlewares.length) return;
     const middleware = this.middlewares[index]
     const result = middleware(...inputs)
     this.dispatch(index + 1, result === undefined ? inputs : [result, ...inputs])
+  }
+}
+
+export type Hook = () => void
+
+export type Api = () => void
+
+export type Plugin = {}
+
+export class Pluggable<
+  H extends Record<string, Hook>,
+  A extends Record<string, Api>
+> {
+  public readonly plugins: Map<string, Plugin> = new Map()
+
+  public constructor(hooks?: Partial<H>, api?: A) {
+
+  }
+
+  public reset(): void {
+    this.plugins.clear()
   }
 }
